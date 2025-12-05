@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ShoppingCart, Utensils, IceCream, Plus, Minus, X, Home, ChevronRight, Ban, MapPin, Truck, Clock, CreditCard, DollarSign, Zap, Loader2, Cake, Pizza, Heart, Cookie, Sunrise, Camera, Instagram, Copy } from 'lucide-react';
-import { initializeApp } from 'firebase/app';
+
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import {
@@ -45,7 +45,6 @@ const sendOrderToBackend = async (cartItems, customer, total) => {
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 // Usamos um objeto vazio como fallback seguro
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDI4Vt_wWDoorQjroBSMav-yCGlhtoiHjY",
@@ -61,14 +60,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-export { db };
-
-let db = null;
 let auth = null;
 
 // Inicializa o Firebase (se as configs existirem)
 if (Object.keys(firebaseConfig).length > 0) {
-    const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
 }
@@ -866,7 +861,7 @@ const DeliveryPage = ({ cart, setPage, deliveryType, setDeliveryType }) => {
 // --- COMPONENTE: PixPaymentDetails (Estático via CNPJ) ---
 
 // --- COMPONENTE: PixPaymentDetails (Estático via CNPJ) ---
-const PixPaymentDetails = ({ total, customerInfo, updateCustomer, cart, createOrder }) => {
+const orderId = await createOrder(cart, total, customerInfo);
     const pixKeyFormatted = "61.982.423/0001-49";
     const pixKeyRaw = "61982423000149";
     const recipientName = "61.982.423 VICTORIA DA SILVA SPINOZA";
@@ -1195,24 +1190,28 @@ const App = () => {
     const pedidosColRef = collection(db, "pedidos");
 
     // dados do pedido (exemplo)
+    const createOrder = async (cart, total, customerInfo) => {
+  try {
+    const pedidosRef = collection(db, "pedidos");
+
     const pedido = {
-      customer: customerInfo,    // { name, phone, address, ... }
-      items: cart.items,         // array de produtos, qtd, preço
-      total: cart.total,         // total do pedido
+      items: cart,
+      total,
+      customer: customerInfo,
       status: "novo",
       createdAt: serverTimestamp()
     };
 
-    // cria documento (auto id)
-    const docRef = await addDoc(pedidosColRef, pedido);
+    const docRef = await addDoc(pedidosRef, pedido);
 
-    console.log("Pedido criado com id:", docRef.id);
-    return { success: true, id: docRef.id };
+    console.log("Pedido criado:", docRef.id);
+    return docRef.id;
+
   } catch (err) {
     console.error("Erro ao criar pedido:", err);
-    return { success: false, error: err };
+    return null;
   }
-}
+};
 
   const [page, setPage] = useState('menu'); 
   const [cart, setCart] = useState([]);
