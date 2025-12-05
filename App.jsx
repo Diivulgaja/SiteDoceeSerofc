@@ -1,20 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ShoppingCart, Utensils, IceCream, Plus, Minus, X, Home, ChevronRight, Ban, MapPin, Truck, Clock, CreditCard, DollarSign, Zap, Loader2, Cake, Pizza, Heart, Cookie, Sunrise, Camera, Instagram, Copy } from 'lucide-react';
 
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
+// firebase centralizado (apenas 1 import — REMOVA os outros)
+import { db, auth } from "./firebase"; // caminho: src/firebase.js
 import {
   collection,
   addDoc,
-  setDoc,
+  serverTimestamp,
   doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  serverTimestamp
+  setDoc,
+  onSnapshot
 } from "firebase/firestore";
-import { db } from "../firebase"; // ajuste o caminho conforme seu projeto
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  signInAnonymously,
+  signInWithCustomToken,
+  onAuthStateChanged
+} from "firebase/auth";
 
 
 // Função para enviar pedido ao PHP (MySQL)
@@ -60,7 +61,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let auth = null;
 
 // Inicializa o Firebase (se as configs existirem)
 if (Object.keys(firebaseConfig).length > 0) {
@@ -1186,27 +1186,23 @@ const App = () => {
 
  export async function createOrder(cart, customerInfo) {
   try {
-    // referência à coleção "pedidos"
-    const pedidosColRef = collection(db, "pedidos");
-
-    // dados do pedido (exemplo)
-    const createOrder = async (cart, total, customerInfo) => {
+    // createOrder: recebe (cartArray, totalValue, customerInfo)
+const createOrder = async (cartArray, totalValue, customerInfo) => {
   try {
+    // referência à coleção pedidos
     const pedidosRef = collection(db, "pedidos");
 
     const pedido = {
-      items: cart,
-      total,
-      customer: customerInfo,
+      items: cartArray,
+      total: totalValue,
+      customer: customerInfo || {},
       status: "novo",
       createdAt: serverTimestamp()
     };
 
     const docRef = await addDoc(pedidosRef, pedido);
-
-    console.log("Pedido criado:", docRef.id);
+    console.log("Pedido criado com id:", docRef.id);
     return docRef.id;
-
   } catch (err) {
     console.error("Erro ao criar pedido:", err);
     return null;
