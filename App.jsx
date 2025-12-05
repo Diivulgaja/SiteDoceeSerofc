@@ -3,15 +3,19 @@ import { ShoppingCart, Utensils, IceCream, Plus, Minus, X, Home, ChevronRight, B
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { 
-  collection, 
-  addDoc, 
-  setDoc, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  onSnapshot 
+import {
+  collection,
+  addDoc,
+  setDoc,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  serverTimestamp
 } from "firebase/firestore";
+import { db } from "../firebase"; // ajuste o caminho conforme seu projeto
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+
 
 // Função para enviar pedido ao PHP (MySQL)
 const sendOrderToBackend = async (cartItems, customer, total) => {
@@ -1185,31 +1189,30 @@ const App = () => {
       setCustomerInfo(prev => ({ ...prev, [field]: value }));
   };
 
-  // Cria um pedido NO FIRESTORE após o cliente confirmar que pagou (Opção B)
-  const createOrder = async (cartItems, total) => {
-      if (!db) {
-          alert('Banco de dados não está configurado. Pedido não salvo.');
-          return;
-      }
-      try {
-          const pedidosCol = collection(db, 'pedidos');
-          const docRef = await addDoc(pedidosCol, {
-              itens: cartItems,
-              total: total,
-              status: 'pago',
-              customer: customerInfo,
-              criadoEm: serverTimestamp()
-          });
-          console.log('Pedido criado com ID:', docRef.id);
-          // Limpa o carrinho
-          setCart([]);
-          // Opcional: retorna id do pedido
-          return docRef.id;
-      } catch (e) {
-          console.error('Erro ao criar pedido:', e);
-          alert('Erro ao salvar pedido. Tente novamente.');
-      }
-  };
+ export async function createOrder(cart, customerInfo) {
+  try {
+    // referência à coleção "pedidos"
+    const pedidosColRef = collection(db, "pedidos");
+
+    // dados do pedido (exemplo)
+    const pedido = {
+      customer: customerInfo,    // { name, phone, address, ... }
+      items: cart.items,         // array de produtos, qtd, preço
+      total: cart.total,         // total do pedido
+      status: "novo",
+      createdAt: serverTimestamp()
+    };
+
+    // cria documento (auto id)
+    const docRef = await addDoc(pedidosColRef, pedido);
+
+    console.log("Pedido criado com id:", docRef.id);
+    return { success: true, id: docRef.id };
+  } catch (err) {
+    console.error("Erro ao criar pedido:", err);
+    return { success: false, error: err };
+  }
+}
 
   const [page, setPage] = useState('menu'); 
   const [cart, setCart] = useState([]);
