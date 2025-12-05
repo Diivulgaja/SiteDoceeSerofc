@@ -3,6 +3,15 @@ import { ShoppingCart, Utensils, IceCream, Plus, Minus, X, Home, ChevronRight, B
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { 
+  collection, 
+  addDoc, 
+  setDoc, 
+  doc, 
+  getDoc, 
+  getDocs, 
+  onSnapshot 
+} from "firebase/firestore";
 
 // Função para enviar pedido ao PHP (MySQL)
 const sendOrderToBackend = async (cartItems, customer, total) => {
